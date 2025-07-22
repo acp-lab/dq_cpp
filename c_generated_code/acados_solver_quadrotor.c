@@ -636,11 +636,11 @@ int fixed_hess = 0;
 
     // set up sim_method_num_stages
     // all sim_method_num_stages are identical
-    int sim_method_num_stages = 2;
+    int sim_method_num_stages = 4;
     for (int i = 0; i < N; i++)
         ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, i, "dynamics_num_stages", &sim_method_num_stages);
 
-    int newton_iter_val = 1;
+    int newton_iter_val = 2;
     for (int i = 0; i < N; i++)
         ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, i, "dynamics_newton_iter", &newton_iter_val);
 
