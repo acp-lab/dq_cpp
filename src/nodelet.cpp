@@ -169,6 +169,7 @@ private:
     std::vector<double> Q_param_;
     std::vector<double> Q_e_param_;
     std::vector<double> R_param_;
+    int quadrotor_payload;
 
     // ros2
     void run();
@@ -230,102 +231,205 @@ void NMPCControlNodelet::referenceCallback(const quadrotor_msgs::msg::PositionCo
         return;
     }
 
-    auto iterator(filt_reference_msg->points.begin());
-    for (int i = 0; i < kSamples; i++) {
-        Eigen::Matrix<double, kStateSize, 1> dual;
-        Eigen::Matrix<double, 13, 1> state;
-        state(0) = iterator->position.x;
-        state(1) = iterator->position.y;
-        state(2) = iterator->position.z;
+    // Section to switch between the the payload and quadrotor
+    
+    int quadrotor_payload = filt_reference_msg->planner_type; 
+    if (quadrotor_payload == int(2)){
+        auto iterator(filt_reference_msg->points.begin());
+        for (int i = 0; i < kSamples; i++) {
+            Eigen::Matrix<double, kStateSize, 1> dual;
+            Eigen::Matrix<double, 13, 1> state;
+            state(0) = iterator->position.x;
+            state(1) = iterator->position.y;
+            state(2) = iterator->position.z;
 
-        state(3) = iterator->velocity.x;
-        state(4) = iterator->velocity.y;
-        state(5) = iterator->velocity.z;
+            state(3) = iterator->velocity.x;
+            state(4) = iterator->velocity.y;
+            state(5) = iterator->velocity.z;
 
-        state(6) = iterator->quaternion.w;
-        state(7) = iterator->quaternion.x;
-        state(8) = iterator->quaternion.y;
-        state(9) = iterator->quaternion.z;
+            state(6) = iterator->quaternion.w;
+            state(7) = iterator->quaternion.x;
+            state(8) = iterator->quaternion.y;
+            state(9) = iterator->quaternion.z;
 
-        state(10) = iterator->angular_velocity.x;
-        state(11) = iterator->angular_velocity.y;
-        state(12) = iterator->angular_velocity.z;
+            state(10) = iterator->angular_velocity.x;
+            state(11) = iterator->angular_velocity.y;
+            state(12) = iterator->angular_velocity.z;
 
-        Eigen::Matrix<double, 4, 1> t;
-        Eigen::Matrix<double, 4, 1> q;
-        Eigen::Matrix<double, 3, 1> w;
-        Eigen::Matrix<double, 3, 1> v;
-        // Translation 
-        t << 0.0, state(0), state(1), state(2);
-        // Quaternion
-        q << state(6), state(7), state(8), state(9);
-        v << state(3), state(4), state(5);
-        w << state(10), state(11), state(12);
-        
-        // Define the H_plus_q matrix
-        Eigen::Matrix<double, 4, 4> H_plus_t;
-        H_plus_t << t(0), -t(1), -t(2), -t(3),
-                    t(1),  t(0), -t(3),  t(2),
-                    t(2),  t(3),  t(0), -t(1),
-                    t(3), -t(2),  t(1),  t(0);
-        Eigen::Matrix<double, 4, 1> aux_dual =(0.5) * H_plus_t * q;
-        // Rotation Velocity Body frame
-        // Convert the vector to a pure quaternion (0, vector)
-        Eigen::Matrix<double, 4, 1> vector;
-        vector << 0.0, v(0), v(1), v(2);
-        // Compute the conjugate of the quaternion
-        Eigen::Matrix<double, 4, 1> quat_c;
-        Eigen::Matrix<double, 4, 1> quat;
-        quat_c << q(0), -q(1), -q(2), -q(3);
-        quat << q(0), q(1), q(2), q(3);
-        // Define the H_plus_q_c matrix for the quaternion conjugate
-        Eigen::Matrix<double, 4, 4> H_plus_q_c;
-        H_plus_q_c << quat_c(0), -quat_c(1), -quat_c(2), -quat_c(3),
-                        quat_c(1),  quat_c(0), -quat_c(3),  quat_c(2),
-                        quat_c(2),  quat_c(3),  quat_c(0), -quat_c(1),
-                        quat_c(3), -quat_c(2),  quat_c(1),  quat_c(0);
-        // Perform the first multiplication
-        Eigen::Matrix<double, 4, 1> aux_value = H_plus_q_c * vector;
-        // Define the H_plus_aux matrix for the result of the first multiplication
-        Eigen::Matrix<double, 4, 4> H_plus_aux;
-        H_plus_aux << aux_value(0), -aux_value(1), -aux_value(2), -aux_value(3),
-                      aux_value(1),  aux_value(0), -aux_value(3),  aux_value(2),
-                      aux_value(2),  aux_value(3),  aux_value(0), -aux_value(1),
-                      aux_value(3), -aux_value(2),  aux_value(1),  aux_value(0);
-        // Perform the second multiplication
-        Eigen::Matrix<double, 4, 1> vector_b = H_plus_aux * quat;
-        // Final Dual quat and Twist
-        dual(0) = q(0);
-        dual(1) = q(1);
-        dual(2) = q(2);
-        dual(3) = q(3);
+            Eigen::Matrix<double, 4, 1> t;
+            Eigen::Matrix<double, 4, 1> q;
+            Eigen::Matrix<double, 3, 1> w;
+            Eigen::Matrix<double, 3, 1> v;
+            // Translation 
+            t << 0.0, state(0), state(1), state(2);
+            // Quaternion
+            q << state(6), state(7), state(8), state(9);
+            v << state(3), state(4), state(5);
+            w << state(10), state(11), state(12);
+            
+            // Define the H_plus_q matrix
+            Eigen::Matrix<double, 4, 4> H_plus_t;
+            H_plus_t << t(0), -t(1), -t(2), -t(3),
+                        t(1),  t(0), -t(3),  t(2),
+                        t(2),  t(3),  t(0), -t(1),
+                        t(3), -t(2),  t(1),  t(0);
+            Eigen::Matrix<double, 4, 1> aux_dual =(0.5) * H_plus_t * q;
+            // Rotation Velocity Body frame
+            // Convert the vector to a pure quaternion (0, vector)
+            Eigen::Matrix<double, 4, 1> vector;
+            vector << 0.0, v(0), v(1), v(2);
+            // Compute the conjugate of the quaternion
+            Eigen::Matrix<double, 4, 1> quat_c;
+            Eigen::Matrix<double, 4, 1> quat;
+            quat_c << q(0), -q(1), -q(2), -q(3);
+            quat << q(0), q(1), q(2), q(3);
+            // Define the H_plus_q_c matrix for the quaternion conjugate
+            Eigen::Matrix<double, 4, 4> H_plus_q_c;
+            H_plus_q_c << quat_c(0), -quat_c(1), -quat_c(2), -quat_c(3),
+                            quat_c(1),  quat_c(0), -quat_c(3),  quat_c(2),
+                            quat_c(2),  quat_c(3),  quat_c(0), -quat_c(1),
+                            quat_c(3), -quat_c(2),  quat_c(1),  quat_c(0);
+            // Perform the first multiplication
+            Eigen::Matrix<double, 4, 1> aux_value = H_plus_q_c * vector;
+            // Define the H_plus_aux matrix for the result of the first multiplication
+            Eigen::Matrix<double, 4, 4> H_plus_aux;
+            H_plus_aux << aux_value(0), -aux_value(1), -aux_value(2), -aux_value(3),
+                          aux_value(1),  aux_value(0), -aux_value(3),  aux_value(2),
+                          aux_value(2),  aux_value(3),  aux_value(0), -aux_value(1),
+                          aux_value(3), -aux_value(2),  aux_value(1),  aux_value(0);
+            // Perform the second multiplication
+            Eigen::Matrix<double, 4, 1> vector_b = H_plus_aux * quat;
+            // Final Dual quat and Twist
+            dual(0) = q(0);
+            dual(1) = q(1);
+            dual(2) = q(2);
+            dual(3) = q(3);
 
-        dual(4) = aux_dual(0);
-        dual(5) = aux_dual(1);
-        dual(6) = aux_dual(2);
-        dual(7) = aux_dual(3);
+            dual(4) = aux_dual(0);
+            dual(5) = aux_dual(1);
+            dual(6) = aux_dual(2);
+            dual(7) = aux_dual(3);
 
-        dual(8) = state(10);
-        dual(9) = state(11);
-        dual(10) = state(12);
+            dual(8) = state(10);
+            dual(9) = state(11);
+            dual(10) = state(12);
 
-        dual(11) = vector_b(1);
-        dual(12) = vector_b(2);
-        dual(13) = vector_b(3);
+            dual(11) = vector_b(1);
+            dual(12) = vector_b(2);
+            dual(13) = vector_b(3);
 
-        reference_states.col(i) << dual(0), dual(1), dual(2), dual(3),
-            dual(4), dual(5), dual(6), dual(7),
-            dual(8), dual(9), dual(10),
-            dual(11), dual(12), dual(13);
+            reference_states.col(i) << dual(0), dual(1), dual(2), dual(3),
+                dual(4), dual(5), dual(6), dual(7),
+                dual(8), dual(9), dual(10),
+                dual(11), dual(12), dual(13);
 
-        ang_vel << iterator->angular_velocity.x, iterator->angular_velocity.y, iterator->angular_velocity.z;
-        ang_acc << iterator->angular_velocity_dot.x, iterator->angular_velocity_dot.y,
-            iterator->angular_velocity_dot.z;
-        moments = inertia_matrix_ * ang_acc + ang_vel.cross(inertia_matrix_ * ang_vel);
-        force_moments << iterator->force, moments;
-        reference_inputs.col(i) << iterator->force, moments(0), moments(1), moments(2);
-        iterator++;
-    }
+            ang_vel << iterator->angular_velocity.x, iterator->angular_velocity.y, iterator->angular_velocity.z;
+            ang_acc << iterator->angular_velocity_dot.x, iterator->angular_velocity_dot.y,
+                iterator->angular_velocity_dot.z;
+            moments = inertia_matrix_ * ang_acc + ang_vel.cross(inertia_matrix_ * ang_vel);
+            force_moments << iterator->force, moments;
+            reference_inputs.col(i) << iterator->force, moments(0), moments(1), moments(2);
+            iterator++;
+        }
+      }
+    else if  (quadrotor_payload == int(1)){
+        auto iterator(filt_reference_msg->points.begin());
+        for (int i = 0; i < kSamples; i++) {
+            Eigen::Matrix<double, kStateSize, 1> dual;
+            Eigen::Matrix<double, 13, 1> state;
+            state(0) = iterator->position_quad.x;
+            state(1) = iterator->position_quad.y;
+            state(2) = iterator->position_quad.z;
+
+            state(3) = iterator->velocity_quad.x;
+            state(4) = iterator->velocity_quad.y;
+            state(5) = iterator->velocity_quad.z;
+
+            state(6) = iterator->quaternion.w;
+            state(7) = iterator->quaternion.x;
+            state(8) = iterator->quaternion.y;
+            state(9) = iterator->quaternion.z;
+
+            state(10) = iterator->angular_velocity.x;
+            state(11) = iterator->angular_velocity.y;
+            state(12) = iterator->angular_velocity.z;
+
+            Eigen::Matrix<double, 4, 1> t;
+            Eigen::Matrix<double, 4, 1> q;
+            Eigen::Matrix<double, 3, 1> w;
+            Eigen::Matrix<double, 3, 1> v;
+            // Translation 
+            t << 0.0, state(0), state(1), state(2);
+            // Quaternion
+            q << state(6), state(7), state(8), state(9);
+            v << state(3), state(4), state(5);
+            w << state(10), state(11), state(12);
+            
+            // Define the H_plus_q matrix
+            Eigen::Matrix<double, 4, 4> H_plus_t;
+            H_plus_t << t(0), -t(1), -t(2), -t(3),
+                        t(1),  t(0), -t(3),  t(2),
+                        t(2),  t(3),  t(0), -t(1),
+                        t(3), -t(2),  t(1),  t(0);
+            Eigen::Matrix<double, 4, 1> aux_dual =(0.5) * H_plus_t * q;
+            // Rotation Velocity Body frame
+            // Convert the vector to a pure quaternion (0, vector)
+            Eigen::Matrix<double, 4, 1> vector;
+            vector << 0.0, v(0), v(1), v(2);
+            // Compute the conjugate of the quaternion
+            Eigen::Matrix<double, 4, 1> quat_c;
+            Eigen::Matrix<double, 4, 1> quat;
+            quat_c << q(0), -q(1), -q(2), -q(3);
+            quat << q(0), q(1), q(2), q(3);
+            // Define the H_plus_q_c matrix for the quaternion conjugate
+            Eigen::Matrix<double, 4, 4> H_plus_q_c;
+            H_plus_q_c << quat_c(0), -quat_c(1), -quat_c(2), -quat_c(3),
+                            quat_c(1),  quat_c(0), -quat_c(3),  quat_c(2),
+                            quat_c(2),  quat_c(3),  quat_c(0), -quat_c(1),
+                            quat_c(3), -quat_c(2),  quat_c(1),  quat_c(0);
+            // Perform the first multiplication
+            Eigen::Matrix<double, 4, 1> aux_value = H_plus_q_c * vector;
+            // Define the H_plus_aux matrix for the result of the first multiplication
+            Eigen::Matrix<double, 4, 4> H_plus_aux;
+            H_plus_aux << aux_value(0), -aux_value(1), -aux_value(2), -aux_value(3),
+                          aux_value(1),  aux_value(0), -aux_value(3),  aux_value(2),
+                          aux_value(2),  aux_value(3),  aux_value(0), -aux_value(1),
+                          aux_value(3), -aux_value(2),  aux_value(1),  aux_value(0);
+            // Perform the second multiplication
+            Eigen::Matrix<double, 4, 1> vector_b = H_plus_aux * quat;
+            // Final Dual quat and Twist
+            dual(0) = q(0);
+            dual(1) = q(1);
+            dual(2) = q(2);
+            dual(3) = q(3);
+
+            dual(4) = aux_dual(0);
+            dual(5) = aux_dual(1);
+            dual(6) = aux_dual(2);
+            dual(7) = aux_dual(3);
+
+            dual(8) = state(10);
+            dual(9) = state(11);
+            dual(10) = state(12);
+
+            dual(11) = vector_b(1);
+            dual(12) = vector_b(2);
+            dual(13) = vector_b(3);
+
+            reference_states.col(i) << dual(0), dual(1), dual(2), dual(3),
+                dual(4), dual(5), dual(6), dual(7),
+                dual(8), dual(9), dual(10),
+                dual(11), dual(12), dual(13);
+
+            ang_vel << iterator->angular_velocity.x, iterator->angular_velocity.y, iterator->angular_velocity.z;
+            ang_acc << iterator->angular_velocity_dot.x, iterator->angular_velocity_dot.y,
+                iterator->angular_velocity_dot.z;
+            moments = inertia_matrix_ * ang_acc + ang_vel.cross(inertia_matrix_ * ang_vel);
+            force_moments << iterator->force, moments;
+            reference_inputs.col(i) << iterator->force, moments(0), moments(1), moments(2);
+            iterator++;
+        }
+      }
     controller_.setReferenceStates(reference_states);
     controller_.setReferenceInputs(reference_inputs);
 
