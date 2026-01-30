@@ -447,8 +447,7 @@ void quadrotor_acados_create_5_set_nlp_in(quadrotor_solver_capsule* capsule, con
         quadrotor_acados_update_time_steps(capsule, N, new_time_steps);
     }
     else
-    {
-        double time_step = 0.07142857142857142;
+    {double time_step = 0.04838709677419355;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
@@ -556,14 +555,14 @@ void quadrotor_acados_create_5_set_nlp_in(quadrotor_solver_capsule* capsule, con
     double* lbu = lubu;
     double* ubu = lubu + NBU;
     
-    lbu[0] = 0.2;
-    ubu[0] = 42;
-    lbu[1] = -0.35;
-    ubu[1] = 0.35;
-    lbu[2] = -0.35;
-    ubu[2] = 0.35;
-    lbu[3] = -0.35;
-    ubu[3] = 0.35;
+    lbu[0] = 2;
+    ubu[0] = 82;
+    lbu[1] = -0.3;
+    ubu[1] = 0.3;
+    lbu[2] = -0.3;
+    ubu[2] = 0.3;
+    lbu[3] = -0.3;
+    ubu[3] = 0.3;
 
     for (int i = 0; i < N; i++)
     {
