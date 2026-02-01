@@ -507,7 +507,7 @@ void NMPCControlNodelet::run() {
         return;
     }
 
-    // Publish solution
+    // Publish solution We can include a logic to stop publishing this values
     publishControl(pred_state, pred_input);
     publishPrediction();
     publishReference();
