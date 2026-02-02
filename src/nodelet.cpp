@@ -99,7 +99,7 @@ public:
         kom_ = {0.13, 0.13, 1.0};
         kr_ = {1.5, 1.5, 1.0};
 
-        hover_thrust_ = mass_ * gravity_/4;
+        hover_thrust_ = mass_ * gravity_;
 
         controller_.setMass(mass_);
         controller_.setGravity(gravity_);
@@ -461,7 +461,7 @@ void NMPCControlNodelet::run() {
         case 1:
             if (_aux_initial){
                 RCLCPP_WARN(this->get_logger(), 
-                    "[NMPC] ACADOS_FAILURE: could not find a solution!");
+                    "[DQ NMPC] ACADOS_FAILURE: could not find a solution!");
                 publishSafeControl();
                 _optimization_error = true;
                 return;
@@ -473,19 +473,19 @@ void NMPCControlNodelet::run() {
             }
         case 2:
             RCLCPP_WARN(this->get_logger(), 
-                "[NMPC] ACADOS_MAXITER: maximum number of iterations reached!");
+                "[DQ NMPC] ACADOS_MAXITER: maximum number of iterations reached!");
             publishSafeControl();
             _optimization_error = true;
             return;
         case 3:
             RCLCPP_WARN(this->get_logger(), 
-                "[NMPC] ACADOS_MINSTEP: minimum step size in QP solver reached!");
+                "[DQ NMPC] ACADOS_MINSTEP: minimum step size in QP solver reached!");
             publishSafeControl();
             _optimization_error = true;
             return;
         case 4:
             RCLCPP_WARN(this->get_logger(), 
-                "[NMPC] ACADOS_QP_FAILURE: qp solver failed!");
+                "[DQ NMPC] ACADOS_QP_FAILURE: qp solver failed!");
             publishSafeControl();
             _optimization_error = true;
             return;
