@@ -22,6 +22,7 @@
 #include "dq_quadrotor_model/dq_quadrotor_model.h"
 
 
+// Map common solver symbols to the dq_quadrotor codegen symbols.
 #define NX DQ_QUADROTOR_NX
 #define NZ DQ_QUADROTOR_NZ
 #define NU DQ_QUADROTOR_NU
