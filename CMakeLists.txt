@@ -71,7 +71,7 @@ set_target_properties(dq_nmpc_control_nodelet PROPERTIES COMPILE_DEFINITIONS "CO
 ament_target_dependencies(dq_nmpc_control_nodelet ${dependencies})
 target_link_libraries(dq_nmpc_control_nodelet
   ${YAML_CPP_LIBRARIES}
-  libacados_ocp_solver_quadrotor.so
+  libacados_ocp_solver_dq_quadrotor
   ${acados_lib}/libacados.so
 )
 

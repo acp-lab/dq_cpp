@@ -8,22 +8,22 @@ solver_input acados_in;
 solver_output acados_out;
 
 NMPCWrapper::NMPCWrapper() {
-    acados_ocp_capsule = quadrotor_acados_create_capsule();
+    acados_ocp_capsule = dq_quadrotor_acados_create_capsule();
 
     new_time_steps = NULL;
-    status = quadrotor_acados_create_with_discretization(acados_ocp_capsule, N, new_time_steps);
+    status = dq_quadrotor_acados_create_with_discretization(acados_ocp_capsule, N, new_time_steps);
 
     if (status) {
-        printf("quadrotor_acados_create() returned status %d. Exiting.\n", status);
+        printf("dq_quadrotor_acados_create() returned status %d. Exiting.\n", status);
         exit(1);
     }
 
-    nlp_config = quadrotor_acados_get_nlp_config(acados_ocp_capsule);
-    nlp_dims = quadrotor_acados_get_nlp_dims(acados_ocp_capsule);
-    nlp_in = quadrotor_acados_get_nlp_in(acados_ocp_capsule);
-    nlp_out = quadrotor_acados_get_nlp_out(acados_ocp_capsule);
-    nlp_solver = quadrotor_acados_get_nlp_solver(acados_ocp_capsule);
-    nlp_opts = quadrotor_acados_get_nlp_opts(acados_ocp_capsule);
+    nlp_config = dq_quadrotor_acados_get_nlp_config(acados_ocp_capsule);
+    nlp_dims = dq_quadrotor_acados_get_nlp_dims(acados_ocp_capsule);
+    nlp_in = dq_quadrotor_acados_get_nlp_in(acados_ocp_capsule);
+    nlp_out = dq_quadrotor_acados_get_nlp_out(acados_ocp_capsule);
+    nlp_solver = dq_quadrotor_acados_get_nlp_solver(acados_ocp_capsule);
+    nlp_opts = dq_quadrotor_acados_get_nlp_opts(acados_ocp_capsule);
 
     Eigen::Matrix<double, kStateSize, 1> hover_state(Eigen::Matrix<double, kStateSize, 1>::Zero());
     hover_state(0) = 1.0;
@@ -102,13 +102,13 @@ bool NMPCWrapper::update(const Eigen::Ref<const Eigen::Matrix<double, kStateSize
     int y_indeces[yRefSize];
     std::iota(y_indeces, y_indeces + yRefSize, 0);
     for (int i = 0; i < N; i++) {
-        quadrotor_acados_update_params_sparse(acados_ocp_capsule, i, y_indeces, acados_in.yref + i * yRefSize,
+        dq_quadrotor_acados_update_params_sparse(acados_ocp_capsule, i, y_indeces, acados_in.yref + i * yRefSize,
                                               yRefSize);
     }
-    quadrotor_acados_update_params_sparse(acados_ocp_capsule, N, y_indeces, acados_in.yref_e, yRefSize);
+    dq_quadrotor_acados_update_params_sparse(acados_ocp_capsule, N, y_indeces, acados_in.yref_e, yRefSize);
 
     // solve NMPC optimization
-    acados_status = quadrotor_acados_solve(acados_ocp_capsule);
+    acados_status = dq_quadrotor_acados_solve(acados_ocp_capsule);
 
     // getting solved states from acados
     for (int ii = 0; ii <= nlp_dims->N; ii++)
@@ -143,7 +143,7 @@ void NMPCWrapper::setWeightMatrices(std::vector<double> Q, std::vector<double> Q
     int params_indeces[params_size];
     std::iota(params_indeces, params_indeces + params_size, yRefSize);
     for (int i = 0; i < N; i++) {
-        quadrotor_acados_update_params_sparse(acados_ocp_capsule, i, params_indeces, params.data(), params_size);
+        dq_quadrotor_acados_update_params_sparse(acados_ocp_capsule, i, params_indeces, params.data(), params_size);
     }
 }
 
