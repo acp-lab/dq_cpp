@@ -706,6 +706,9 @@ void NMPCControlNodelet::publishControl(
   trpy_msg.kr = kr_;
   trpy_msg.aux.enable_motors = enable_motors_;
   trpy_msg.thrust = pred_input(0);
+  trpy_msg.torque.x = pred_input(1);
+  trpy_msg.torque.y = pred_input(2);
+  trpy_msg.torque.z = pred_input(3);
   trpy_msg.angular_velocity.x = pred_state(8);
   trpy_msg.angular_velocity.y = pred_state(9);
   trpy_msg.angular_velocity.z = pred_state(10);
@@ -725,6 +728,9 @@ void NMPCControlNodelet::publishSafeControl() {
   trpy_msg.kr = kr_;
   trpy_msg.aux.enable_motors = enable_motors_;
   trpy_msg.thrust = 0.0;
+  trpy_msg.torque.x = 0.0;
+  trpy_msg.torque.y = 0.0;
+  trpy_msg.torque.z = 0.0;
   trpy_msg.angular_velocity.x = 0.0;
   trpy_msg.angular_velocity.y = 0.0;
   trpy_msg.angular_velocity.z = 0.0;
