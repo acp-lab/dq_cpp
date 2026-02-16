@@ -447,7 +447,8 @@ void dq_quadrotor_acados_create_5_set_nlp_in(dq_quadrotor_solver_capsule* capsul
         dq_quadrotor_acados_update_time_steps(capsule, N, new_time_steps);
     }
     else
-    {double time_step = 0.04838709677419355;
+    {
+        double time_step = 0.04838709677419355;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
