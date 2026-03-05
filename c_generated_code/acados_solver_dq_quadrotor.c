@@ -556,8 +556,8 @@ void dq_quadrotor_acados_create_5_set_nlp_in(dq_quadrotor_solver_capsule* capsul
     double* lbu = lubu;
     double* ubu = lubu + NBU;
     
-    lbu[0] = 2;
-    ubu[0] = 62;
+    lbu[0] = 0.2;
+    ubu[0] = 42;
     lbu[1] = -0.35;
     ubu[1] = 0.35;
     lbu[2] = -0.35;

@@ -86,6 +86,12 @@ public:
                 -frame_dx_, frame_dx_, km_ / kf_, km_ / kf_, -km_ / kf_, -km_ / kf_;
             mixer_matrix_inv_ = mixer_matrix.inverse();
         }
+
+        else if (platform_type_ == "mqp") { // Not used in actual flight. Currently made up values to enable build
+            mixer_matrix << 1, 1, 1, 1, frame_dy_, -frame_dy_, -frame_dy_, frame_dy_, -frame_dx_, frame_dx_,
+                -frame_dx_, frame_dx_, km_ / kf_, km_ / kf_, -km_ / kf_, -km_ / kf_;
+            mixer_matrix_inv_ = mixer_matrix.inverse();
+        }
         else {
             std::cerr << "\n\n[ERROR] Cannot set Mixer Matrix Inv - "
                          "Wrong platform type for moments, implemented are "
