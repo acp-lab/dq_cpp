@@ -2707,8 +2707,8 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   for (i=0, rr=w37, cs=w40; i<3; ++i) (*rr++) -= (*cs++);
   /* #133: @40 = [0, 0, 1] */
   casadi_copy(casadi_c3, 3, w40);
-  /* #134: @7 = 1.2 */
-  w07 = 1.2000000000000000e+00;
+  /* #134: @7 = 1.08 */
+  w07 = 1.0800000000000001e+00;
   /* #135: @3 = (@3/@7) */
   w03 /= w07;
   /* #136: @40 = (@40*@3) */

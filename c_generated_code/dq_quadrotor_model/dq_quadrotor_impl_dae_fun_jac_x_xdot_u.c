@@ -2715,8 +2715,8 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   for (i=0, rr=w38, cs=w41; i<3; ++i) (*rr++) -= (*cs++);
   /* #133: @41 = [0, 0, 1] */
   casadi_copy(casadi_c3, 3, w41);
-  /* #134: @7 = 1.2 */
-  w07 = 1.2000000000000000e+00;
+  /* #134: @7 = 1.08 */
+  w07 = 1.0800000000000001e+00;
   /* #135: @3 = (@3/@7) */
   w03 /= w07;
   /* #136: @42 = (@41*@3) */
@@ -3873,8 +3873,8 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   /* #716: @77 = zeros(4x14,6nz) */
   casadi_clear(w77, 6);
   /* #717: @46 = zeros(8x1,0nz) */
-  /* #718: @11 = 0.833333 */
-  w11 = 8.3333333333333337e-01;
+  /* #718: @11 = 0.925926 */
+  w11 = 9.2592592592592582e-01;
   /* #719: @16 = ones(4x1) */
   casadi_fill(w16, 4, 1.);
   /* #720: {@9, NULL, NULL, NULL} = vertsplit(@16) */

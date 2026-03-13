@@ -258,6 +258,7 @@ void NMPCControlNodelet::referenceCallback(
   // Section to switch between the the payload and quadrotor
 
   int quadrotor_payload = filt_reference_msg->planner_type;
+  int number_iterations = 0;
   if (quadrotor_payload == int(2)) {
     auto iterator(filt_reference_msg->points.begin());
     for (int i = 0; i < kSamples; i++) {
@@ -353,6 +354,7 @@ void NMPCControlNodelet::referenceCallback(
       reference_inputs.col(i) << iterator->force, moments(0), moments(1),
           moments(2);
       iterator++;
+      number_iterations = i;
     }
   } else if (quadrotor_payload == int(1)) {
     auto iterator(filt_reference_msg->points.begin());
@@ -449,8 +451,12 @@ void NMPCControlNodelet::referenceCallback(
       reference_inputs.col(i) << iterator->force, moments(0), moments(1),
           moments(2);
       iterator++;
+      number_iterations = i;
     }
   }
+  RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 1000,
+                       "[NMPC] Checking length desired path. %i",
+                       number_iterations);
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
 
