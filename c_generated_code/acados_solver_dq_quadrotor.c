@@ -557,12 +557,12 @@ void dq_quadrotor_acados_create_5_set_nlp_in(dq_quadrotor_solver_capsule* capsul
     
     lbu[0] = 2;
     ubu[0] = 82;
-    lbu[1] = -0.3;
-    ubu[1] = 0.3;
-    lbu[2] = -0.3;
-    ubu[2] = 0.3;
-    lbu[3] = -0.3;
-    ubu[3] = 0.3;
+    lbu[1] = -0.5;
+    ubu[1] = 0.5;
+    lbu[2] = -0.5;
+    ubu[2] = 0.5;
+    lbu[3] = -0.5;
+    ubu[3] = 0.5;
 
     for (int i = 0; i < N; i++)
     {
