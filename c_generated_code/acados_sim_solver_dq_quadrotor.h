@@ -54,19 +54,22 @@ typedef struct dq_quadrotor_sim_solver_capsule
     sim_opts *acados_sim_opts;
     sim_config *acados_sim_config;
     void *acados_sim_dims;
+    void *acados_sim_mem;
 
     /* external functions */
     // ERK
-    external_function_param_casadi * sim_forw_vde_casadi;
+    external_function_param_casadi * sim_expl_vde_forw;
     external_function_param_casadi * sim_vde_adj_casadi;
     external_function_param_casadi * sim_expl_ode_fun_casadi;
     external_function_param_casadi * sim_expl_ode_hess;
+    external_function_param_casadi * sim_expl_vde_forw_p;
 
     // IRK
     external_function_param_casadi * sim_impl_dae_fun;
     external_function_param_casadi * sim_impl_dae_fun_jac_x_xdot_z;
     external_function_param_casadi * sim_impl_dae_jac_x_xdot_u_z;
     external_function_param_casadi * sim_impl_dae_hess;
+    external_function_param_casadi * sim_impl_dae_jac_p;
 
     // GNSF
     external_function_param_casadi * sim_gnsf_phi_fun;
@@ -80,6 +83,7 @@ typedef struct dq_quadrotor_sim_solver_capsule
 
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule *capsule);
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_sim_solve(dq_quadrotor_sim_solver_capsule *capsule);
+
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_sim_free(dq_quadrotor_sim_solver_capsule *capsule);
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_sim_update_params(dq_quadrotor_sim_solver_capsule *capsule, double *value, int np);
 
@@ -89,7 +93,7 @@ ACADOS_SYMBOL_EXPORT sim_out * dq_quadrotor_acados_get_sim_out(dq_quadrotor_sim_
 ACADOS_SYMBOL_EXPORT void * dq_quadrotor_acados_get_sim_dims(dq_quadrotor_sim_solver_capsule *capsule);
 ACADOS_SYMBOL_EXPORT sim_opts * dq_quadrotor_acados_get_sim_opts(dq_quadrotor_sim_solver_capsule *capsule);
 ACADOS_SYMBOL_EXPORT sim_solver * dq_quadrotor_acados_get_sim_solver(dq_quadrotor_sim_solver_capsule *capsule);
-
+ACADOS_SYMBOL_EXPORT void * dq_quadrotor_acados_get_sim_mem(dq_quadrotor_sim_solver_capsule *capsule);
 
 ACADOS_SYMBOL_EXPORT dq_quadrotor_sim_solver_capsule * dq_quadrotor_acados_sim_solver_create_capsule(void);
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_sim_solver_free_capsule(dq_quadrotor_sim_solver_capsule *capsule);

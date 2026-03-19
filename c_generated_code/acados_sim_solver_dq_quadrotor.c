@@ -73,13 +73,22 @@ int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule * capsule)
     const int np = DQ_QUADROTOR_NP;
     bool tmp_bool;
 
-    
     double Tsim = 0.04838709677419355;
+
+    capsule->acados_sim_mem = NULL;
+
+    external_function_opts ext_fun_opts;
+    external_function_opts_set_to_default(&ext_fun_opts);
+    ext_fun_opts.external_workspace = false;
 
     
     capsule->sim_impl_dae_fun = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
     capsule->sim_impl_dae_fun_jac_x_xdot_z = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
     capsule->sim_impl_dae_jac_x_xdot_u_z = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
+
+    
+        capsule->sim_impl_dae_jac_p = NULL;
+    
     // external functions (implicit model)
     capsule->sim_impl_dae_fun->casadi_fun = &dq_quadrotor_impl_dae_fun;
     capsule->sim_impl_dae_fun->casadi_work = &dq_quadrotor_impl_dae_fun_work;
@@ -87,7 +96,7 @@ int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule * capsule)
     capsule->sim_impl_dae_fun->casadi_sparsity_out = &dq_quadrotor_impl_dae_fun_sparsity_out;
     capsule->sim_impl_dae_fun->casadi_n_in = &dq_quadrotor_impl_dae_fun_n_in;
     capsule->sim_impl_dae_fun->casadi_n_out = &dq_quadrotor_impl_dae_fun_n_out;
-    external_function_param_casadi_create(capsule->sim_impl_dae_fun, np);
+    external_function_param_casadi_create(capsule->sim_impl_dae_fun, np, &ext_fun_opts);
 
     capsule->sim_impl_dae_fun_jac_x_xdot_z->casadi_fun = &dq_quadrotor_impl_dae_fun_jac_x_xdot_z;
     capsule->sim_impl_dae_fun_jac_x_xdot_z->casadi_work = &dq_quadrotor_impl_dae_fun_jac_x_xdot_z_work;
@@ -95,16 +104,17 @@ int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule * capsule)
     capsule->sim_impl_dae_fun_jac_x_xdot_z->casadi_sparsity_out = &dq_quadrotor_impl_dae_fun_jac_x_xdot_z_sparsity_out;
     capsule->sim_impl_dae_fun_jac_x_xdot_z->casadi_n_in = &dq_quadrotor_impl_dae_fun_jac_x_xdot_z_n_in;
     capsule->sim_impl_dae_fun_jac_x_xdot_z->casadi_n_out = &dq_quadrotor_impl_dae_fun_jac_x_xdot_z_n_out;
-    external_function_param_casadi_create(capsule->sim_impl_dae_fun_jac_x_xdot_z, np);
+    external_function_param_casadi_create(capsule->sim_impl_dae_fun_jac_x_xdot_z, np, &ext_fun_opts);
 
-    // external_function_param_casadi impl_dae_jac_x_xdot_u_z;
     capsule->sim_impl_dae_jac_x_xdot_u_z->casadi_fun = &dq_quadrotor_impl_dae_jac_x_xdot_u_z;
     capsule->sim_impl_dae_jac_x_xdot_u_z->casadi_work = &dq_quadrotor_impl_dae_jac_x_xdot_u_z_work;
     capsule->sim_impl_dae_jac_x_xdot_u_z->casadi_sparsity_in = &dq_quadrotor_impl_dae_jac_x_xdot_u_z_sparsity_in;
     capsule->sim_impl_dae_jac_x_xdot_u_z->casadi_sparsity_out = &dq_quadrotor_impl_dae_jac_x_xdot_u_z_sparsity_out;
     capsule->sim_impl_dae_jac_x_xdot_u_z->casadi_n_in = &dq_quadrotor_impl_dae_jac_x_xdot_u_z_n_in;
     capsule->sim_impl_dae_jac_x_xdot_u_z->casadi_n_out = &dq_quadrotor_impl_dae_jac_x_xdot_u_z_n_out;
-    external_function_param_casadi_create(capsule->sim_impl_dae_jac_x_xdot_u_z, np);
+    external_function_param_casadi_create(capsule->sim_impl_dae_jac_x_xdot_u_z, np, &ext_fun_opts);
+
+    
 
     
 
@@ -122,6 +132,7 @@ int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule * capsule)
     sim_dims_set(dq_quadrotor_sim_config, dq_quadrotor_sim_dims, "nx", &nx);
     sim_dims_set(dq_quadrotor_sim_config, dq_quadrotor_sim_dims, "nu", &nu);
     sim_dims_set(dq_quadrotor_sim_config, dq_quadrotor_sim_dims, "nz", &nz);
+    sim_dims_set(dq_quadrotor_sim_config, dq_quadrotor_sim_dims, "np", &np);
 
 
     // sim opts
@@ -159,11 +170,14 @@ int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule * capsule)
                  "impl_ode_fun_jac_x_xdot", capsule->sim_impl_dae_fun_jac_x_xdot_z);
     dq_quadrotor_sim_config->model_set(dq_quadrotor_sim_in->model,
                  "impl_ode_jac_x_xdot_u", capsule->sim_impl_dae_jac_x_xdot_u_z);
+    
 
     // sim solver
     sim_solver *dq_quadrotor_sim_solver = sim_solver_create(dq_quadrotor_sim_config,
-                                               dq_quadrotor_sim_dims, dq_quadrotor_sim_opts);
+                                               dq_quadrotor_sim_dims, dq_quadrotor_sim_opts, dq_quadrotor_sim_in);
     capsule->acados_sim_solver = dq_quadrotor_sim_solver;
+
+    capsule->acados_sim_mem = dq_quadrotor_sim_solver->mem;
 
 
     /* initialize parameter values */
@@ -254,6 +268,8 @@ int dq_quadrotor_acados_sim_solve(dq_quadrotor_sim_solver_capsule *capsule)
 }
 
 
+
+
 int dq_quadrotor_acados_sim_free(dq_quadrotor_sim_solver_capsule *capsule)
 {
     // free memory
@@ -268,9 +284,11 @@ int dq_quadrotor_acados_sim_free(dq_quadrotor_sim_solver_capsule *capsule)
     external_function_param_casadi_free(capsule->sim_impl_dae_fun);
     external_function_param_casadi_free(capsule->sim_impl_dae_fun_jac_x_xdot_z);
     external_function_param_casadi_free(capsule->sim_impl_dae_jac_x_xdot_u_z);
+    
     free(capsule->sim_impl_dae_fun);
     free(capsule->sim_impl_dae_fun_jac_x_xdot_z);
     free(capsule->sim_impl_dae_jac_x_xdot_u_z);
+    
 
     return 0;
 }
@@ -289,6 +307,7 @@ int dq_quadrotor_acados_sim_update_params(dq_quadrotor_sim_solver_capsule *capsu
     capsule->sim_impl_dae_fun[0].set_param(capsule->sim_impl_dae_fun, p);
     capsule->sim_impl_dae_fun_jac_x_xdot_z[0].set_param(capsule->sim_impl_dae_fun_jac_x_xdot_z, p);
     capsule->sim_impl_dae_jac_x_xdot_u_z[0].set_param(capsule->sim_impl_dae_jac_x_xdot_u_z, p);
+    
 
     return status;
 }
@@ -322,5 +341,10 @@ sim_opts * dq_quadrotor_acados_get_sim_opts(dq_quadrotor_sim_solver_capsule *cap
 sim_solver  * dq_quadrotor_acados_get_sim_solver(dq_quadrotor_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_solver;
+};
+
+void * dq_quadrotor_acados_get_sim_mem(dq_quadrotor_sim_solver_capsule *capsule)
+{
+    return capsule->acados_sim_mem;
 };
 
