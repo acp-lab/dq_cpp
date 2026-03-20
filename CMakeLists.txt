@@ -75,12 +75,15 @@ target_link_libraries(dq_nmpc_control_nodelet
   ${acados_lib}/libacados.so
 )
 
-rclcpp_components_register_nodes(dq_nmpc_control_nodelet "dq_nmpc_control_nodelet::NMPCControlNodelet")
+rclcpp_components_register_node(dq_nmpc_control_nodelet 
+PLUGIN "dq_nmpc_control_nodelet::NMPCControlNodelet"
+EXECUTABLE dq_nmpc_control_nodelet_exec)
 ament_export_libraries(dq_nmpc_control_nodelet)
 ament_export_dependencies(${dependencies})
 
 install(TARGETS
   dq_nmpc_control_nodelet
+  dq_nmpc_control_nodelet_exec
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

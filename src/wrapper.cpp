@@ -36,11 +36,9 @@ NMPCWrapper::NMPCWrapper() {
   acados_states_ = hover_state.replicate(1, kSamples).template cast<double>();
   acados_inputs_ = kHoverInput_.replicate(1, kSamples).template cast<double>();
 
-  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0,
-                                "lbx",
+  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0, "lbx",
                                 acados_in.x0);
-  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0,
-                                "ubx",
+  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0, "ubx",
                                 acados_in.x0);
 
   // initialize references y and yN.
@@ -65,11 +63,9 @@ void NMPCWrapper::initStates() {
   acados_states_ = hover_state.replicate(1, kSamples).template cast<double>();
   acados_inputs_ = kHoverInput_.replicate(1, kSamples).template cast<double>();
 
-  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0,
-                                "lbx",
+  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0, "lbx",
                                 acados_in.x0);
-  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0,
-                                "ubx",
+  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0, "ubx",
                                 acados_in.x0);
 
   // initialize references y and yN.
@@ -120,11 +116,9 @@ bool NMPCWrapper::update(
   acados_initial_state_ = state.template cast<double>();
 
   ocp_nlp_out_set(nlp_config, nlp_dims, nlp_out, nlp_in, 0, "x", acados_in.x0);
-  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0,
-                                "lbx",
+  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0, "lbx",
                                 acados_in.x0);
-  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0,
-                                "ubx",
+  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, 0, "ubx",
                                 acados_in.x0);
 
   // loop over horizon and assign to each shooting node a segment of the
