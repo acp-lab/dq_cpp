@@ -454,9 +454,6 @@ void NMPCControlNodelet::referenceCallback(
       number_iterations = i;
     }
   }
-  RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 1000,
-                       "[NMPC] Checking length desired path. %i",
-                       number_iterations);
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
 
@@ -464,7 +461,7 @@ void NMPCControlNodelet::referenceCallback(
        reference_msg->header.stamp.nanosec * 1e-9) -
           controller_.getStampState() >
       0.01)
-    RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 1000,
+    RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 5000,
                          "[NMPC] Outdated odometry.");
 
   // Run controller but stop when error found
