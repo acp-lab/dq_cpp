@@ -13,6 +13,7 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/empty.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 
 namespace dq_nmpc_control_nodelet {
 class NMPCControlNodelet : public rclcpp::Node {
@@ -131,6 +132,13 @@ public:
             "position_cmd", 1,
             std::bind(&NMPCControlNodelet::referenceCallback, this,
                       std::placeholders::_1));
+
+    sub_planner_quadrotor_cmd_ =
+        this->create_subscription<quadrotor_msgs::msg::PositionCommand>(
+            "payload_planner_quadrotor_cmd", 1,
+            std::bind(&NMPCControlNodelet::referencePlannerCallback, this,
+                      std::placeholders::_1));
+
     sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
         "imu", 1,
         std::bind(&NMPCControlNodelet::imuCallback, this,
@@ -139,6 +147,11 @@ public:
         "motors", 1,
         std::bind(&NMPCControlNodelet::motorsCallback, this,
                   std::placeholders::_1));
+
+    srv_activate_payload_ = this->create_service<std_srvs::srv::SetBool>(
+        "activate_payload_nmpc_controller",
+        std::bind(&NMPCControlNodelet::activate_payload_callback, this,
+                  std::placeholders::_1, std::placeholders::_2));
   }
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -189,6 +202,7 @@ private:
   std::vector<double> Q_e_param_;
   std::vector<double> R_param_;
   int quadrotor_payload;
+  bool use_nmpc_payload_{false};
 
   // ros2
   void run();
@@ -200,9 +214,15 @@ private:
   void publishPrediction();
   void referenceCallback(
       const quadrotor_msgs::msg::PositionCommand::SharedPtr pos_cmd);
+  void referencePlannerCallback(
+      const quadrotor_msgs::msg::PositionCommand::SharedPtr pos_cmd);
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg);
   void imuCallback(const sensor_msgs::msg::Imu::SharedPtr imu_msg);
   void motorsCallback(const std_msgs::msg::Bool::SharedPtr msg);
+
+  void activate_payload_callback(
+      const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+      std::shared_ptr<std_srvs::srv::SetBool::Response> response);
 
   rclcpp::Publisher<quadrotor_msgs::msg::TRPYCommand>::SharedPtr pub_trpy_cmd_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_ref_traj_;
@@ -213,12 +233,195 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
   rclcpp::Subscription<quadrotor_msgs::msg::PositionCommand>::SharedPtr
       sub_position_cmd_;
+  rclcpp::Subscription<quadrotor_msgs::msg::PositionCommand>::SharedPtr
+      sub_planner_quadrotor_cmd_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_motors_;
+
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr srv_activate_payload_;
 };
+
+void NMPCControlNodelet::activate_payload_callback(
+    const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+    std::shared_ptr<std_srvs::srv::SetBool::Response> response) {
+  use_nmpc_payload_ = request->data;
+  response->success = true;
+  response->message = use_nmpc_payload_ ? "Payload NMPC Planner active"
+                                        : "Standard TRPY active";
+  RCLCPP_INFO(this->get_logger(), "Switching controller mode: %s",
+              response->message.c_str());
+}
+
+void NMPCControlNodelet::referencePlannerCallback(
+    const quadrotor_msgs::msg::PositionCommand::SharedPtr reference_msg) {
+
+  if (!use_nmpc_payload_) {
+    return;
+  }
+  // filter quaternion
+  quadrotor_msgs::msg::PositionCommand::SharedPtr filt_reference_msg(
+      reference_msg);
+  Eigen::Vector4d pre_quat(pre_odom_quat_(0), pre_odom_quat_(1),
+                           pre_odom_quat_(2), pre_odom_quat_(3));
+  Eigen::Vector4d current_quat;
+  for (auto point : filt_reference_msg->points) {
+    current_quat = Eigen::Vector4d(point.quaternion.w, point.quaternion.x,
+                                   point.quaternion.y, point.quaternion.z);
+    if (current_quat.dot(pre_quat) < 0) {
+      point.quaternion.w = -point.quaternion.w;
+      point.quaternion.x = -point.quaternion.x;
+      point.quaternion.y = -point.quaternion.y;
+      point.quaternion.z = -point.quaternion.z;
+      current_quat = -current_quat;
+    }
+    pre_quat = current_quat;
+  }
+
+  Eigen::Matrix<double, kStateSize, kSamples> reference_states;
+  Eigen::Matrix<double, kInputSize, kSamples> reference_inputs;
+  reference_states = Eigen::Matrix<double, kStateSize, kSamples>::Zero();
+  reference_inputs = Eigen::Matrix<double, kInputSize, kSamples>::Zero();
+
+  Eigen::Vector4d force_moments = Eigen::Vector4d::Zero();
+  Eigen::Vector3d ang_acc = Eigen::Vector3d::Zero();
+  Eigen::Vector3d ang_vel = Eigen::Vector3d::Zero();
+  Eigen::Vector3d moments = Eigen::Vector3d::Zero();
+
+  if (filt_reference_msg->points.size() == 0) {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 1000,
+                         "[NMPC] Reference has no points.");
+    return;
+  }
+
+  // Section to switch between the the payload and quadrotor
+
+  int quadrotor_payload = filt_reference_msg->planner_type;
+  int number_iterations = 0;
+  RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 500,
+                       "[DQ-NMPC] Using desired States From Payload Planner.");
+  auto iterator(filt_reference_msg->points.begin());
+  for (int i = 0; i < kSamples; i++) {
+    Eigen::Matrix<double, kStateSize, 1> dual;
+    Eigen::Matrix<double, 13, 1> state;
+    state(0) = iterator->position.x;
+    state(1) = iterator->position.y;
+    state(2) = iterator->position.z;
+
+    state(3) = iterator->velocity.x;
+    state(4) = iterator->velocity.y;
+    state(5) = iterator->velocity.z;
+
+    state(6) = iterator->quaternion.w;
+    state(7) = iterator->quaternion.x;
+    state(8) = iterator->quaternion.y;
+    state(9) = iterator->quaternion.z;
+
+    state(10) = iterator->angular_velocity.x;
+    state(11) = iterator->angular_velocity.y;
+    state(12) = iterator->angular_velocity.z;
+
+    Eigen::Matrix<double, 4, 1> t;
+    Eigen::Matrix<double, 4, 1> q;
+    Eigen::Matrix<double, 3, 1> w;
+    Eigen::Matrix<double, 3, 1> v;
+    // Translation
+    t << 0.0, state(0), state(1), state(2);
+    // Quaternion
+    q << state(6), state(7), state(8), state(9);
+    v << state(3), state(4), state(5);
+    w << state(10), state(11), state(12);
+
+    // Define the H_plus_q matrix
+    Eigen::Matrix<double, 4, 4> H_plus_t;
+    H_plus_t << t(0), -t(1), -t(2), -t(3), t(1), t(0), -t(3), t(2), t(2), t(3),
+        t(0), -t(1), t(3), -t(2), t(1), t(0);
+    Eigen::Matrix<double, 4, 1> aux_dual = (0.5) * H_plus_t * q;
+    // Rotation Velocity Body frame
+    // Convert the vector to a pure quaternion (0, vector)
+    Eigen::Matrix<double, 4, 1> vector;
+    vector << 0.0, v(0), v(1), v(2);
+    // Compute the conjugate of the quaternion
+    Eigen::Matrix<double, 4, 1> quat_c;
+    Eigen::Matrix<double, 4, 1> quat;
+    quat_c << q(0), -q(1), -q(2), -q(3);
+    quat << q(0), q(1), q(2), q(3);
+    // Define the H_plus_q_c matrix for the quaternion conjugate
+    Eigen::Matrix<double, 4, 4> H_plus_q_c;
+    H_plus_q_c << quat_c(0), -quat_c(1), -quat_c(2), -quat_c(3), quat_c(1),
+        quat_c(0), -quat_c(3), quat_c(2), quat_c(2), quat_c(3), quat_c(0),
+        -quat_c(1), quat_c(3), -quat_c(2), quat_c(1), quat_c(0);
+    // Perform the first multiplication
+    Eigen::Matrix<double, 4, 1> aux_value = H_plus_q_c * vector;
+    // Define the H_plus_aux matrix for the result of the first multiplication
+    Eigen::Matrix<double, 4, 4> H_plus_aux;
+    H_plus_aux << aux_value(0), -aux_value(1), -aux_value(2), -aux_value(3),
+        aux_value(1), aux_value(0), -aux_value(3), aux_value(2), aux_value(2),
+        aux_value(3), aux_value(0), -aux_value(1), aux_value(3), -aux_value(2),
+        aux_value(1), aux_value(0);
+    // Perform the second multiplication
+    Eigen::Matrix<double, 4, 1> vector_b = H_plus_aux * quat;
+    // Final Dual quat and Twist
+    dual(0) = q(0);
+    dual(1) = q(1);
+    dual(2) = q(2);
+    dual(3) = q(3);
+
+    dual(4) = aux_dual(0);
+    dual(5) = aux_dual(1);
+    dual(6) = aux_dual(2);
+    dual(7) = aux_dual(3);
+
+    dual(8) = state(10);
+    dual(9) = state(11);
+    dual(10) = state(12);
+
+    dual(11) = vector_b(1);
+    dual(12) = vector_b(2);
+    dual(13) = vector_b(3);
+
+    reference_states.col(i) << dual(0), dual(1), dual(2), dual(3), dual(4),
+        dual(5), dual(6), dual(7), dual(8), dual(9), dual(10), dual(11),
+        dual(12), dual(13);
+
+    ang_vel << iterator->angular_velocity.x, iterator->angular_velocity.y,
+        iterator->angular_velocity.z;
+    ang_acc << iterator->angular_velocity_dot.x,
+        iterator->angular_velocity_dot.y, iterator->angular_velocity_dot.z;
+    moments =
+        inertia_matrix_ * ang_acc + ang_vel.cross(inertia_matrix_ * ang_vel);
+    force_moments << iterator->force, moments;
+    reference_inputs.col(i) << iterator->force, moments(0), moments(1),
+        moments(2);
+    iterator++;
+    number_iterations = i;
+  }
+
+  RCLCPP_WARN_THROTTLE(
+      this->get_logger(), clock_, 500,
+      "[DQ-NMPC] Using desired States From Payload Planner with %d",
+      number_iterations);
+  controller_.setReferenceStates(reference_states);
+  controller_.setReferenceInputs(reference_inputs);
+
+  if ((reference_msg->header.stamp.sec +
+       reference_msg->header.stamp.nanosec * 1e-9) -
+          controller_.getStampState() >
+      0.01)
+    RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 5000,
+                         "[NMPC] Outdated odometry.");
+
+  // Run controller but stop when error found
+  if (!_optimization_error) {
+    run();
+  }
+}
 
 void NMPCControlNodelet::referenceCallback(
     const quadrotor_msgs::msg::PositionCommand::SharedPtr reference_msg) {
+
+  if (use_nmpc_payload_) {
+    return;
+  }
 
   // filter quaternion
   quadrotor_msgs::msg::PositionCommand::SharedPtr filt_reference_msg(
@@ -260,6 +463,8 @@ void NMPCControlNodelet::referenceCallback(
   int quadrotor_payload = filt_reference_msg->planner_type;
   int number_iterations = 0;
   if (quadrotor_payload == int(2)) {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 500,
+                         "[DQ-NMPC] Using quadrotor Normal Location Desired.");
     auto iterator(filt_reference_msg->points.begin());
     for (int i = 0; i < kSamples; i++) {
       Eigen::Matrix<double, kStateSize, 1> dual;
@@ -357,6 +562,8 @@ void NMPCControlNodelet::referenceCallback(
       number_iterations = i;
     }
   } else if (quadrotor_payload == int(1)) {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 500,
+                         "[DQ-NMPC] Using quadrotor New Location Desired.");
     auto iterator(filt_reference_msg->points.begin());
     for (int i = 0; i < kSamples; i++) {
       Eigen::Matrix<double, kStateSize, 1> dual;
@@ -454,6 +661,10 @@ void NMPCControlNodelet::referenceCallback(
       number_iterations = i;
     }
   }
+  RCLCPP_WARN_THROTTLE(
+      this->get_logger(), clock_, 500,
+      "[DQ-NMPC] Using desired States from Quadrotor Planner with %d",
+      number_iterations);
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
 
