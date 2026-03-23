@@ -297,7 +297,7 @@ void NMPCControlNodelet::referencePlannerCallback(
 
   int quadrotor_payload = filt_reference_msg->planner_type;
   int number_iterations = 0;
-  RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 500,
+  RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 1000,
                        "[DQ-NMPC] Using desired States From Payload Planner.");
   auto iterator(filt_reference_msg->points.begin());
   for (int i = 0; i < kSamples; i++) {
@@ -397,7 +397,7 @@ void NMPCControlNodelet::referencePlannerCallback(
   }
 
   RCLCPP_WARN_THROTTLE(
-      this->get_logger(), clock_, 500,
+      this->get_logger(), clock_, 1000,
       "[DQ-NMPC] Using desired States From Payload Planner with %d",
       number_iterations);
   controller_.setReferenceStates(reference_states);
@@ -408,7 +408,7 @@ void NMPCControlNodelet::referencePlannerCallback(
           controller_.getStampState() >
       0.01)
     RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 5000,
-                         "[NMPC] Outdated odometry.");
+                         "[DQ-NMPC] Outdated odometry.");
 
   // Run controller but stop when error found
   if (!_optimization_error) {
@@ -454,7 +454,7 @@ void NMPCControlNodelet::referenceCallback(
 
   if (filt_reference_msg->points.size() == 0) {
     RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 1000,
-                         "[NMPC] Reference has no points.");
+                         "[DQ-NMPC] Reference has no points.");
     return;
   }
 
@@ -464,7 +464,7 @@ void NMPCControlNodelet::referenceCallback(
   int number_iterations = 0;
   if (quadrotor_payload == int(2)) {
     RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 500,
-                         "[DQ-NMPC] Using quadrotor Normal Location Desired.");
+                         "[DQ-NMPC] Using Quadrotor Normal Location Desired.");
     auto iterator(filt_reference_msg->points.begin());
     for (int i = 0; i < kSamples; i++) {
       Eigen::Matrix<double, kStateSize, 1> dual;
@@ -563,7 +563,7 @@ void NMPCControlNodelet::referenceCallback(
     }
   } else if (quadrotor_payload == int(1)) {
     RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 500,
-                         "[DQ-NMPC] Using quadrotor New Location Desired.");
+                         "[DQ-NMPC] Using Quadrotor New Location Desired.");
     auto iterator(filt_reference_msg->points.begin());
     for (int i = 0; i < kSamples; i++) {
       Eigen::Matrix<double, kStateSize, 1> dual;
@@ -673,7 +673,7 @@ void NMPCControlNodelet::referenceCallback(
           controller_.getStampState() >
       0.01)
     RCLCPP_WARN_THROTTLE(this->get_logger(), clock_, 5000,
-                         "[NMPC] Outdated odometry.");
+                         "[DQ-NMPC] Outdated odometry.");
 
   // Run controller but stop when error found
   if (!_optimization_error) {
@@ -740,7 +740,7 @@ void NMPCControlNodelet::run() {
   bool has_nan_in_state = pred_state.array().isNaN().any();
   bool has_nan_in_input = pred_input.array().isNaN().any();
   if (has_nan_in_state || has_nan_in_input) {
-    RCLCPP_WARN(this->get_logger(), "[NMPC] NaN in current solution!");
+    RCLCPP_WARN(this->get_logger(), "[DQ-NMPC] NaN in current solution!");
     _optimization_error = true;
     _aux_initial = true;
     return;
