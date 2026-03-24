@@ -64,7 +64,7 @@
 #define DQ_QUADROTOR_NY0    0
 #define DQ_QUADROTOR_NY     0
 #define DQ_QUADROTOR_NYN    0
-#define DQ_QUADROTOR_N      51
+#define DQ_QUADROTOR_N      31
 #define DQ_QUADROTOR_NH     0
 #define DQ_QUADROTOR_NHN    0
 #define DQ_QUADROTOR_NH0    0
