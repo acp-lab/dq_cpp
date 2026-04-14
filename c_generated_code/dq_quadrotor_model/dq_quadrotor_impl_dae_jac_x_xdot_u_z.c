@@ -3379,8 +3379,8 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
    [00, 00, 354.616]] */
   casadi_copy(casadi_c3, 3, w59);
   /* #494: @59 = nonzeros(@59) */
-  /* #495: @6 = 0.921659 */
-  w06 = 9.2165898617511521e-01;
+  /* #495: @6 = 1.17647 */
+  w06 = 1.1764705882352942e+00;
   /* #496: @11 = ones(4x1) */
   casadi_fill(w11, 4, 1.);
   /* #497: {@5, NULL, NULL, NULL} = vertsplit(@11) */
