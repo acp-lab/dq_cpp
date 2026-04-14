@@ -40,6 +40,7 @@
 #define DQ_QUADROTOR_NZ     0
 #define DQ_QUADROTOR_NU     4
 #define DQ_QUADROTOR_NP     50
+#define DQ_QUADROTOR_NP_GLOBAL     0
 #define DQ_QUADROTOR_NBX    0
 #define DQ_QUADROTOR_NBX0   14
 #define DQ_QUADROTOR_NBU    4
@@ -94,31 +95,39 @@ typedef struct dq_quadrotor_solver_capsule
     unsigned int nlp_np;
 
     /* external functions */
+
     // dynamics
 
-    external_function_param_casadi *impl_dae_fun;
-    external_function_param_casadi *impl_dae_fun_jac_x_xdot_z;
-    external_function_param_casadi *impl_dae_jac_x_xdot_u_z;
+    external_function_external_param_casadi *impl_dae_fun;
+    external_function_external_param_casadi *impl_dae_fun_jac_x_xdot_z;
+    external_function_external_param_casadi *impl_dae_jac_x_xdot_u_z;
+    external_function_external_param_casadi *impl_dae_jac_p;
 
 
 
 
     // cost
 
-    external_function_param_casadi *ext_cost_fun;
-    external_function_param_casadi *ext_cost_fun_jac;
-    external_function_param_casadi *ext_cost_fun_jac_hess;
+    external_function_external_param_casadi *ext_cost_fun;
+    external_function_external_param_casadi *ext_cost_fun_jac;
+    external_function_external_param_casadi *ext_cost_fun_jac_hess;
 
 
 
-    external_function_param_casadi ext_cost_0_fun;
-    external_function_param_casadi ext_cost_0_fun_jac;
-    external_function_param_casadi ext_cost_0_fun_jac_hess;
 
 
-    external_function_param_casadi ext_cost_e_fun;
-    external_function_param_casadi ext_cost_e_fun_jac;
-    external_function_param_casadi ext_cost_e_fun_jac_hess;
+    external_function_external_param_casadi ext_cost_0_fun;
+    external_function_external_param_casadi ext_cost_0_fun_jac;
+    external_function_external_param_casadi ext_cost_0_fun_jac_hess;
+
+
+
+
+    external_function_external_param_casadi ext_cost_e_fun;
+    external_function_external_param_casadi ext_cost_e_fun_jac;
+    external_function_external_param_casadi ext_cost_e_fun_jac_hess;
+
+
 
     // constraints
 
@@ -154,12 +163,16 @@ ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_update_time_steps(dq_quadrotor_solv
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_update_qp_solver_cond_N(dq_quadrotor_solver_capsule * capsule, int qp_solver_cond_N);
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_update_params(dq_quadrotor_solver_capsule * capsule, int stage, double *value, int np);
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_update_params_sparse(dq_quadrotor_solver_capsule * capsule, int stage, int *idx, double *p, int n_update);
+ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_set_p_global_and_precompute_dependencies(dq_quadrotor_solver_capsule* capsule, double* data, int data_len);
 
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_solve(dq_quadrotor_solver_capsule * capsule);
+ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_setup_qp_matrices_and_factorize(dq_quadrotor_solver_capsule* capsule);
+
+
+
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_free(dq_quadrotor_solver_capsule * capsule);
 ACADOS_SYMBOL_EXPORT void dq_quadrotor_acados_print_stats(dq_quadrotor_solver_capsule * capsule);
 ACADOS_SYMBOL_EXPORT int dq_quadrotor_acados_custom_update(dq_quadrotor_solver_capsule* capsule, double* data, int data_len);
-
 
 ACADOS_SYMBOL_EXPORT ocp_nlp_in *dq_quadrotor_acados_get_nlp_in(dq_quadrotor_solver_capsule * capsule);
 ACADOS_SYMBOL_EXPORT ocp_nlp_out *dq_quadrotor_acados_get_nlp_out(dq_quadrotor_solver_capsule * capsule);

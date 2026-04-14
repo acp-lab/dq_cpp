@@ -68,6 +68,8 @@ const int *dq_quadrotor_impl_dae_fun_jac_x_xdot_u_sparsity_in(int);
 const int *dq_quadrotor_impl_dae_fun_jac_x_xdot_u_sparsity_out(int);
 int dq_quadrotor_impl_dae_fun_jac_x_xdot_u_n_in(void);
 int dq_quadrotor_impl_dae_fun_jac_x_xdot_u_n_out(void);
+
+
   
 
 

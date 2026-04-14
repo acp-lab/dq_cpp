@@ -62,6 +62,10 @@ int dq_quadrotor_cost_ext_cost_0_fun_jac_n_out(void);
 
 
 
+
+
+
+
 // Cost at path shooting node
 
 int dq_quadrotor_cost_ext_cost_fun(const real_t** arg, real_t** res, int* iw, real_t* w, void *mem);
@@ -86,6 +90,10 @@ int dq_quadrotor_cost_ext_cost_fun_jac_n_in(void);
 int dq_quadrotor_cost_ext_cost_fun_jac_n_out(void);
 
 
+
+
+
+
 // Cost at terminal shooting node
 
 int dq_quadrotor_cost_ext_cost_e_fun(const real_t** arg, real_t** res, int* iw, real_t* w, void *mem);
@@ -108,6 +116,10 @@ const int *dq_quadrotor_cost_ext_cost_e_fun_jac_sparsity_in(int);
 const int *dq_quadrotor_cost_ext_cost_e_fun_jac_sparsity_out(int);
 int dq_quadrotor_cost_ext_cost_e_fun_jac_n_in(void);
 int dq_quadrotor_cost_ext_cost_e_fun_jac_n_out(void);
+
+
+
+
 
 
 
