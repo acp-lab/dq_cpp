@@ -105,19 +105,55 @@ public:
         controller_.setGravity(gravity_);
         controller_.setWeightMatrices(Q_param_, Q_e_param_, R_param_);
 
+        // // custom QoS
+        // auto qos_profile = rclcpp::SensorDataQoS();
+
+        // pub_trpy_cmd_ = this->create_publisher<quadrotor_msgs::msg::TRPYCommand>("trpy_cmd", 1);
+        // pub_ref_traj_ = this->create_publisher<nav_msgs::msg::Path>("reference_path", 1);
+        // pub_pred_traj_ = this->create_publisher<nav_msgs::msg::Path>("predicted_path", 1);
+        // pub_desired_pose_ = this->create_publisher<nav_msgs::msg::Odometry>("reference_pose", 1);
+        // //pub_dual_ = this->create_publisher<mujoco_msgs::msg::Dual>("dual_cpp", 10);
+
+        // rclcpp::QoS odom_sub_qos(1);
+        // odom_sub_qos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
+        // odom_sub_qos.history(rclcpp::HistoryPolicy::KeepLast);
+
+        // rclcpp::QoS position_cmd_qos(1);
+        // position_cmd_qos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
+        // position_cmd_qos.history(rclcpp::HistoryPolicy::KeepLast);
+                
+        // sub_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
+        //     "odom", odom_sub_qos, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));
+        // sub_position_cmd_ = this->create_subscription<quadrotor_msgs::msg::PositionCommand>(
+        //     "position_cmd", position_cmd_qos, std::bind(&NMPCControlNodelet::referenceCallback, this, std::placeholders::_1));
+        // sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
+        //     "imu", 1, std::bind(&NMPCControlNodelet::imuCallback, this, std::placeholders::_1));
+        // sub_motors_ = this->create_subscription<std_msgs::msg::Bool>(
+        //     "motors", 1, std::bind(&NMPCControlNodelet::motorsCallback, this, std::placeholders::_1));
+
         // custom QoS
+        
         auto qos_profile = rclcpp::SensorDataQoS();
 
-        pub_trpy_cmd_ = this->create_publisher<quadrotor_msgs::msg::TRPYCommand>("trpy_cmd", 1);
+        rclcpp::QoS so3_cmd_qos(1);
+        so3_cmd_qos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
+        so3_cmd_qos.history(rclcpp::HistoryPolicy::KeepLast);
+
+        pub_trpy_cmd_ = this->create_publisher<quadrotor_msgs::msg::TRPYCommand>("trpy_cmd", so3_cmd_qos);
+        // pub_wrench_cmd_ = this->create_publisher<geometry_msgs::msg::Wrench>("force_tau_cmd", so3_cmd_qos);
         pub_ref_traj_ = this->create_publisher<nav_msgs::msg::Path>("reference_path", 1);
         pub_pred_traj_ = this->create_publisher<nav_msgs::msg::Path>("predicted_path", 1);
         pub_desired_pose_ = this->create_publisher<nav_msgs::msg::Odometry>("reference_pose", 1);
         //pub_dual_ = this->create_publisher<mujoco_msgs::msg::Dual>("dual_cpp", 10);
 
+        rclcpp::QoS position_cmd_qos(1);
+        position_cmd_qos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
+        position_cmd_qos.history(rclcpp::HistoryPolicy::KeepLast);
+
         sub_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
             "odom", qos_profile, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));
         sub_position_cmd_ = this->create_subscription<quadrotor_msgs::msg::PositionCommand>(
-            "position_cmd", 1, std::bind(&NMPCControlNodelet::referenceCallback, this, std::placeholders::_1));
+            "position_cmd", position_cmd_qos, std::bind(&NMPCControlNodelet::referenceCallback, this, std::placeholders::_1));
         sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
             "imu", 1, std::bind(&NMPCControlNodelet::imuCallback, this, std::placeholders::_1));
         sub_motors_ = this->create_subscription<std_msgs::msg::Bool>(
