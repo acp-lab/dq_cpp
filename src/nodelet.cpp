@@ -621,9 +621,9 @@ void NMPCControlNodelet::publishControl(
   geometry_msgs::msg::Wrench linear_acceleration_angular_acceleration_msg;
   // this is the computation of the desired angular acceleration
   Eigen::Matrix<double, 3, 1> omega;
-  omega(0) = current_state(8);
-  omega(1) = current_state(9);
-  omega(2) = current_state(10);
+  omega(0) = pred_state(8);
+  omega(1) = pred_state(9);
+  omega(2) = pred_state(10);
 
   Eigen::Matrix<double, 3, 1> torque;
   torque(0) = pred_input(1);
