@@ -73,7 +73,7 @@ int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule * capsule)
     const int np = DQ_QUADROTOR_NP;
     bool tmp_bool;
 
-    double Tsim = 0.07142857142857142;
+    double Tsim = 0.04838709677419355;
 
     capsule->acados_sim_mem = NULL;
 
