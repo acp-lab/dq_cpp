@@ -18,46 +18,47 @@
 #include "acados/utils/print.h"
 #include "acados_c/external_function_interface.h"
 #include "acados_c/ocp_nlp_interface.h"
-#include "acados_solver_quadrotor.h"
-#include "quadrotor_model/quadrotor_model.h"
+#include "acados_solver_dq_quadrotor.h"
+#include "dq_quadrotor_model/dq_quadrotor_model.h"
 
 
-#define NX QUADROTOR_NX
-#define NZ QUADROTOR_NZ
-#define NU QUADROTOR_NU
-#define NP QUADROTOR_NP
-#define NBX QUADROTOR_NBX
-#define NBX0 QUADROTOR_NBX0
-#define NBU QUADROTOR_NBU
-#define NSBX QUADROTOR_NSBX
-#define NSBU QUADROTOR_NSBU
-#define NSH QUADROTOR_NSH
-#define NSG QUADROTOR_NSG
-#define NSPHI QUADROTOR_NSPHI
-#define NSHN QUADROTOR_NSHN
-#define NSGN QUADROTOR_NSGN
-#define NSPHIN QUADROTOR_NSPHIN
-#define NSBXN QUADROTOR_NSBXN
-#define NS QUADROTOR_NS
-#define NSN QUADROTOR_NSN
-#define NG QUADROTOR_NG
-#define NBXN QUADROTOR_NBXN
-#define NGN QUADROTOR_NGN
-#define NY0 QUADROTOR_NY0
-#define NY QUADROTOR_NY
-#define NYN QUADROTOR_NYN
-#define NH QUADROTOR_NH
-#define NPHI QUADROTOR_NPHI
-#define NHN QUADROTOR_NHN
-#define NPHIN QUADROTOR_NPHIN
-#define NR QUADROTOR_NR
-const int N = QUADROTOR_N;
+// Map common solver symbols to the dq_quadrotor codegen symbols.
+#define NX DQ_QUADROTOR_NX
+#define NZ DQ_QUADROTOR_NZ
+#define NU DQ_QUADROTOR_NU
+#define NP DQ_QUADROTOR_NP
+#define NBX DQ_QUADROTOR_NBX
+#define NBX0 DQ_QUADROTOR_NBX0
+#define NBU DQ_QUADROTOR_NBU
+#define NSBX DQ_QUADROTOR_NSBX
+#define NSBU DQ_QUADROTOR_NSBU
+#define NSH DQ_QUADROTOR_NSH
+#define NSG DQ_QUADROTOR_NSG
+#define NSPHI DQ_QUADROTOR_NSPHI
+#define NSHN DQ_QUADROTOR_NSHN
+#define NSGN DQ_QUADROTOR_NSGN
+#define NSPHIN DQ_QUADROTOR_NSPHIN
+#define NSBXN DQ_QUADROTOR_NSBXN
+#define NS DQ_QUADROTOR_NS
+#define NSN DQ_QUADROTOR_NSN
+#define NG DQ_QUADROTOR_NG
+#define NBXN DQ_QUADROTOR_NBXN
+#define NGN DQ_QUADROTOR_NGN
+#define NY0 DQ_QUADROTOR_NY0
+#define NY DQ_QUADROTOR_NY
+#define NYN DQ_QUADROTOR_NYN
+#define NH DQ_QUADROTOR_NH
+#define NPHI DQ_QUADROTOR_NPHI
+#define NHN DQ_QUADROTOR_NHN
+#define NPHIN DQ_QUADROTOR_NPHIN
+#define NR DQ_QUADROTOR_NR
+const int N = DQ_QUADROTOR_N;
 
 namespace dq_nmpc_control_nodelet {
-static constexpr int kStateSize = QUADROTOR_NX;
-static constexpr int kSamples = QUADROTOR_N;
-static constexpr int kInputSize = QUADROTOR_NU;
-static constexpr int yRefSize = QUADROTOR_NX + QUADROTOR_NU;
+static constexpr int kStateSize = DQ_QUADROTOR_NX;
+static constexpr int kSamples = DQ_QUADROTOR_N;
+static constexpr int kInputSize = DQ_QUADROTOR_NU;
+static constexpr int yRefSize = DQ_QUADROTOR_NX + DQ_QUADROTOR_NU;
 
 struct solver_output {
     // The Eigen Maps initialized in the class can directly change these values below
@@ -114,7 +115,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
-    quadrotor_solver_capsule *acados_ocp_capsule;
+    dq_quadrotor_solver_capsule *acados_ocp_capsule;
     ocp_nlp_in *nlp_in;
     ocp_nlp_out *nlp_out;
     ocp_nlp_solver *nlp_solver;
