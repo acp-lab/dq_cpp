@@ -30,6 +30,7 @@
 // standard
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> // memcpy
 
 // acados
 #include "acados_c/external_function_interface.h"
@@ -44,7 +45,8 @@
 // example specific
 #include "dq_quadrotor_model/dq_quadrotor_model.h"
 #include "acados_sim_solver_dq_quadrotor.h"
-
+// initial value of stagewise parameters
+static const double p_init[] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,};
 
 // ** solver data **
 
@@ -73,7 +75,7 @@ int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule * capsule)
     const int np = DQ_QUADROTOR_NP;
     bool tmp_bool;
 
-    double Tsim = 0.04838709677419355;
+    double Tsim = 0.07142857142857142;
 
     capsule->acados_sim_mem = NULL;
 
@@ -181,42 +183,9 @@ int dq_quadrotor_acados_sim_create(dq_quadrotor_sim_solver_capsule * capsule)
 
 
     /* initialize parameter values */
-    double* p = calloc(np, sizeof(double));
     
-    p[0] = 1;
-    p[18] = 1;
-    p[19] = 1;
-    p[20] = 1;
-    p[21] = 1;
-    p[22] = 1;
-    p[23] = 1;
-    p[24] = 1;
-    p[25] = 1;
-    p[26] = 1;
-    p[27] = 1;
-    p[28] = 1;
-    p[29] = 1;
-    p[30] = 1;
-    p[31] = 1;
-    p[32] = 1;
-    p[33] = 1;
-    p[34] = 1;
-    p[35] = 1;
-    p[36] = 1;
-    p[37] = 1;
-    p[38] = 1;
-    p[39] = 1;
-    p[40] = 1;
-    p[41] = 1;
-    p[42] = 1;
-    p[43] = 1;
-    p[44] = 1;
-    p[45] = 1;
-    p[46] = 1;
-    p[47] = 1;
-    p[48] = 1;
-    p[49] = 1;
-
+    double* p = malloc(np*sizeof(double));
+    memcpy(p, p_init, np*sizeof(double));
     dq_quadrotor_acados_sim_update_params(capsule, p, np);
     free(p);
 

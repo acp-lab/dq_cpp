@@ -130,11 +130,20 @@ public:
         "odom", qos_profile,
         std::bind(&NMPCControlNodelet::odomCallback, this,
                   std::placeholders::_1));
-    sub_position_cmd_ =
-        this->create_subscription<quadrotor_msgs::msg::PositionCommand>(
-            "position_cmd", 1,
-            std::bind(&NMPCControlNodelet::referenceCallback, this,
-                      std::placeholders::_1));
+    // sub_position_cmd_ =
+    //     this->create_subscription<quadrotor_msgs::msg::PositionCommand>(
+    //         "position_cmd", 1,
+    //         std::bind(&NMPCControlNodelet::referenceCallback, this,
+    //                   std::placeholders::_1));
+    rclcpp::QoS position_cmd_qos(1);
+    position_cmd_qos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
+    position_cmd_qos.history(rclcpp::HistoryPolicy::KeepLast);
+
+    sub_position_cmd_ = this->create_subscription<quadrotor_msgs::msg::PositionCommand>(
+                        "position_cmd", 
+                        position_cmd_qos,
+                        std::bind(&NMPCControlNodelet::referenceCallback, this, std::placeholders::_1)
+                    );
     sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
         "imu", 1,
         std::bind(&NMPCControlNodelet::imuCallback, this,

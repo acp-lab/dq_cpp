@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h> // memcpy
 // acados
 // #include "acados/utils/print.h"
 #include "acados_c/ocp_nlp_interface.h"
@@ -87,6 +88,10 @@
 #define NSPHIN DQ_QUADROTOR_NSPHIN
 #define NSGN   DQ_QUADROTOR_NSGN
 #define NSBXN  DQ_QUADROTOR_NSBXN
+// initial value of stagewise parameters
+static const double p_init[] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,};
+
+
 
 
 
@@ -412,41 +417,11 @@ void dq_quadrotor_acados_create_set_default_parameters(dq_quadrotor_solver_capsu
 {
 
     const int N = capsule->nlp_solver_plan->N;
-    // initialize parameters to nominal value
-    double* p = calloc(NP, sizeof(double));
-    p[0] = 1;
-    p[18] = 1;
-    p[19] = 1;
-    p[20] = 1;
-    p[21] = 1;
-    p[22] = 1;
-    p[23] = 1;
-    p[24] = 1;
-    p[25] = 1;
-    p[26] = 1;
-    p[27] = 1;
-    p[28] = 1;
-    p[29] = 1;
-    p[30] = 1;
-    p[31] = 1;
-    p[32] = 1;
-    p[33] = 1;
-    p[34] = 1;
-    p[35] = 1;
-    p[36] = 1;
-    p[37] = 1;
-    p[38] = 1;
-    p[39] = 1;
-    p[40] = 1;
-    p[41] = 1;
-    p[42] = 1;
-    p[43] = 1;
-    p[44] = 1;
-    p[45] = 1;
-    p[46] = 1;
-    p[47] = 1;
-    p[48] = 1;
-    p[49] = 1;
+
+    // initialize parameters to initial value
+    
+    double* p = malloc(NP*sizeof(double));
+    memcpy(p, p_init, NP*sizeof(double));
 
     for (int i = 0; i <= N; i++) {
         dq_quadrotor_acados_update_params(capsule, i, p, NP);
@@ -489,45 +464,35 @@ void dq_quadrotor_acados_setup_nlp_in(dq_quadrotor_solver_capsule* capsule, cons
     {
         // set time_steps
     
-        double time_step = 0.04838709677419355;
+        double time_step = 0.07142857142857142;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
         }
         // set cost scaling
         double* cost_scaling = malloc((N+1)*sizeof(double));
-        cost_scaling[0] = 0.04838709677419355;
-        cost_scaling[1] = 0.04838709677419355;
-        cost_scaling[2] = 0.04838709677419355;
-        cost_scaling[3] = 0.04838709677419355;
-        cost_scaling[4] = 0.04838709677419355;
-        cost_scaling[5] = 0.04838709677419355;
-        cost_scaling[6] = 0.04838709677419355;
-        cost_scaling[7] = 0.04838709677419355;
-        cost_scaling[8] = 0.04838709677419355;
-        cost_scaling[9] = 0.04838709677419355;
-        cost_scaling[10] = 0.04838709677419355;
-        cost_scaling[11] = 0.04838709677419355;
-        cost_scaling[12] = 0.04838709677419355;
-        cost_scaling[13] = 0.04838709677419355;
-        cost_scaling[14] = 0.04838709677419355;
-        cost_scaling[15] = 0.04838709677419355;
-        cost_scaling[16] = 0.04838709677419355;
-        cost_scaling[17] = 0.04838709677419355;
-        cost_scaling[18] = 0.04838709677419355;
-        cost_scaling[19] = 0.04838709677419355;
-        cost_scaling[20] = 0.04838709677419355;
-        cost_scaling[21] = 0.04838709677419355;
-        cost_scaling[22] = 0.04838709677419355;
-        cost_scaling[23] = 0.04838709677419355;
-        cost_scaling[24] = 0.04838709677419355;
-        cost_scaling[25] = 0.04838709677419355;
-        cost_scaling[26] = 0.04838709677419355;
-        cost_scaling[27] = 0.04838709677419355;
-        cost_scaling[28] = 0.04838709677419355;
-        cost_scaling[29] = 0.04838709677419355;
-        cost_scaling[30] = 0.04838709677419355;
-        cost_scaling[31] = 1;
+        cost_scaling[0] = 0.07142857142857142;
+        cost_scaling[1] = 0.07142857142857142;
+        cost_scaling[2] = 0.07142857142857142;
+        cost_scaling[3] = 0.07142857142857142;
+        cost_scaling[4] = 0.07142857142857142;
+        cost_scaling[5] = 0.07142857142857142;
+        cost_scaling[6] = 0.07142857142857142;
+        cost_scaling[7] = 0.07142857142857142;
+        cost_scaling[8] = 0.07142857142857142;
+        cost_scaling[9] = 0.07142857142857142;
+        cost_scaling[10] = 0.07142857142857142;
+        cost_scaling[11] = 0.07142857142857142;
+        cost_scaling[12] = 0.07142857142857142;
+        cost_scaling[13] = 0.07142857142857142;
+        cost_scaling[14] = 0.07142857142857142;
+        cost_scaling[15] = 0.07142857142857142;
+        cost_scaling[16] = 0.07142857142857142;
+        cost_scaling[17] = 0.07142857142857142;
+        cost_scaling[18] = 0.07142857142857142;
+        cost_scaling[19] = 0.07142857142857142;
+        cost_scaling[20] = 0.07142857142857142;
+        cost_scaling[21] = 1;
         for (int i = 0; i <= N; i++)
         {
             ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "scaling", &cost_scaling[i]);
@@ -647,13 +612,13 @@ void dq_quadrotor_acados_setup_nlp_in(dq_quadrotor_solver_capsule* capsule, cons
     double* lbu = lubu;
     double* ubu = lubu + NBU;
     lbu[0] = 2;
-    ubu[0] = 82;
-    lbu[1] = -0.5;
-    ubu[1] = 0.5;
-    lbu[2] = -0.5;
-    ubu[2] = 0.5;
-    lbu[3] = -0.5;
-    ubu[3] = 0.5;
+    ubu[0] = 62;
+    lbu[1] = -0.35;
+    ubu[1] = 0.35;
+    lbu[2] = -0.35;
+    ubu[2] = 0.35;
+    lbu[3] = -0.35;
+    ubu[3] = 0.35;
 
     for (int i = 0; i < N; i++)
     {
