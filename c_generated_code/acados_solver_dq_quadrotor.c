@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h> // memcpy
 // acados
 // #include "acados/utils/print.h"
 #include "acados_c/ocp_nlp_interface.h"
@@ -87,6 +88,10 @@
 #define NSPHIN DQ_QUADROTOR_NSPHIN
 #define NSGN   DQ_QUADROTOR_NSGN
 #define NSBXN  DQ_QUADROTOR_NSBXN
+// initial value of stagewise parameters
+static const double p_init[] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,};
+
+
 
 
 
@@ -412,41 +417,11 @@ void dq_quadrotor_acados_create_set_default_parameters(dq_quadrotor_solver_capsu
 {
 
     const int N = capsule->nlp_solver_plan->N;
-    // initialize parameters to nominal value
-    double* p = calloc(NP, sizeof(double));
-    p[0] = 1;
-    p[18] = 1;
-    p[19] = 1;
-    p[20] = 1;
-    p[21] = 1;
-    p[22] = 1;
-    p[23] = 1;
-    p[24] = 1;
-    p[25] = 1;
-    p[26] = 1;
-    p[27] = 1;
-    p[28] = 1;
-    p[29] = 1;
-    p[30] = 1;
-    p[31] = 1;
-    p[32] = 1;
-    p[33] = 1;
-    p[34] = 1;
-    p[35] = 1;
-    p[36] = 1;
-    p[37] = 1;
-    p[38] = 1;
-    p[39] = 1;
-    p[40] = 1;
-    p[41] = 1;
-    p[42] = 1;
-    p[43] = 1;
-    p[44] = 1;
-    p[45] = 1;
-    p[46] = 1;
-    p[47] = 1;
-    p[48] = 1;
-    p[49] = 1;
+
+    // initialize parameters to initial value
+    
+    double* p = malloc(NP*sizeof(double));
+    memcpy(p, p_init, NP*sizeof(double));
 
     for (int i = 0; i <= N; i++) {
         dq_quadrotor_acados_update_params(capsule, i, p, NP);
